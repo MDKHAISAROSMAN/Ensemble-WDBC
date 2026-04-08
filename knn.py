@@ -56,6 +56,6 @@ def K_NN(name,path,test= None):
     else:
         test = np.array(test, dtype=float).reshape(1, -1)
         y = name.predict(test)
-        return y[0],accuracy
+        return y,accuracy
 
 

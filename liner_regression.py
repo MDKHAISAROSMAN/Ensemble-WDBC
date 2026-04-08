@@ -2,22 +2,12 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-def load_data(file_path):
-    df = pd.read_csv(file_path,sep=",",header=None,na_values=[0])
-    df=df.dropna(axis = 0)
-    label = (df[[1]] == "M").astype(int)
-    df=df.drop([0,1],axis=1)
-    df.columns =[f"feature{i}" for i in range(1,df.shape[1]+1)]
-    label.columns = ["result"]
-    return df,label
-
-
 def normalize(x_train, x_test,a):
     mean = np.mean(x_train, axis=0)
     mean = mean.values.reshape(1,-1)
     std = np.std(x_train, axis=0)
     std = std.values.reshape(1,-1)
-    if a is None:
+    if a.all()==None:
         x_train = (x_train - mean) / std
         x_test  = (x_test  - mean) / std
         return x_train,x_test,None
@@ -56,6 +46,8 @@ class fit():
             db = np.sum(dz)/m
             w-=alpha*dw
             b-=alpha*db
+            l = -np.mean(y_train * np.log(A + 1e-9) + (1 - y_train) * np.log(1 - A + 1e-9))
+        #print(f"final loss: {l}")
         return w,b
     
     def predict(self,test_input):
@@ -65,22 +57,18 @@ class fit():
         return y_pred
 
 
-def regression(name,path,new= None):
+def regression(name,df,label,new= None):
     epoch = 200
     alpha = 0.5
-    
-    df,label = load_data(path)
+    new = new.reshape(1,-1)
     x_train,x_test,y_train,y_test = split_data(df,label)
     x_train, x_test, new = normalize(x_train, x_test,new)
     name = fit(x_train, y_train, epoch, alpha)
     y_pred = name.predict(x_test)
-    accuracy = np.mean(y_pred == y_test) * 100
+    acc = np.mean(y_pred == y_test) * 100
 
-    if(new is None):
-        return accuracy
+    if(new.all() == None):
+        return acc
     else:
-        new = new.reshape(1, -1)
-        prediction = name.predict(new)
-        value = prediction.iloc[0,0]
-        return int(value) , accuracy
-    
+        prediction = name.predict(new.reshape(1,-1))
+        return prediction , acc
