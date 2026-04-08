@@ -1,6 +1,20 @@
 import numpy as np
 from collections import Counter
 import pandas as pd
+from sklearn.model_selection import train_test_split
+
+def load_data(path):
+    df = pd.read_csv(path,sep=",",header=None,na_values=[0])
+    df=df.dropna(axis = 0)
+    label = (df[1] == "M").astype(int)
+    df=df.drop([0,1],axis=1)
+    df.columns =[f"feature{i}" for i in range(1,df.shape[1]+1)]
+    label.columns = ["result"]
+    return df,label
+
+def split_data(df,label):
+    x_train,x_test,y_train,y_test = train_test_split(df,label,random_state=42,stratify=label,test_size=0.25)
+    return x_train,x_test,y_train,y_test
 
 def euclidian_distance(a,b):
     return np.sqrt(np.sum((b-a)**2))
@@ -24,7 +38,13 @@ class KNN:
         most_common = Counter(k_nearest_label).most_common(1)[0][0]
         return int(most_common)
 
-def K_NN(name,x_train,x_test,y_train,y_test,test= None):
+def K_NN(name,path,test= None):
+    df,label = load_data(path)
+    x_train,x_test,y_train,y_test = split_data(df,label)
+    x_train = x_train.values
+    x_test = x_test.values
+    y_train = y_train.values
+    y_test = y_test.values
     name = KNN(7)
     x_test=x_test.astype(float)
     x_train = x_train
