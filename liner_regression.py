@@ -2,6 +2,15 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 
+def import_data(path):
+    df = pd.read_csv(path,sep = ",",header = None)
+    label = (df[[1]] == "M").astype(int)
+    df = df.drop([0,1],axis = 1)
+    df.columns = [f"feature{i}" for i in range (1,df.shape[1]+1)]
+    label.columns = ["Result"]
+    label = label.values
+    return df,label
+
 def normalize(x_train, x_test,a):
     mean = np.mean(x_train, axis=0)
     mean = mean.values.reshape(1,-1)
@@ -57,10 +66,11 @@ class fit():
         return y_pred
 
 
-def regression(name,df,label,new= None):
+def regression(name,path,new= None):
     epoch = 200
     alpha = 0.5
     new = new.reshape(1,-1)
+    df,label = import_data(path)
     x_train,x_test,y_train,y_test = split_data(df,label)
     x_train, x_test, new = normalize(x_train, x_test,new)
     name = fit(x_train, y_train, epoch, alpha)
@@ -71,4 +81,5 @@ def regression(name,df,label,new= None):
         return acc
     else:
         prediction = name.predict(new.reshape(1,-1))
-        return prediction , acc
+        value = prediction.values
+        return value[0][0] , acc
