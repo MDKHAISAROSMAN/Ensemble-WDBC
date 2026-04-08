@@ -2,14 +2,28 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-def normalize(x_train, x_test):
+def normalize(x_train, x_test,a):
     mean = np.mean(x_train, axis=0)
     mean = mean.values.reshape(1,-1)
     std = np.std(x_train, axis=0)
     std = std.values.reshape(1,-1)
-    x_train = (x_train - mean) / std
-    x_test  = (x_test  - mean) / std
-    return x_train, x_test,mean,std
+    if a.all()==None:
+        x_train = (x_train - mean) / std
+        x_test  = (x_test  - mean) / std
+        return x_train,x_test,None
+    else:
+        x_train = (x_train - mean) / std
+        x_test  = (x_test  - mean) / std
+        a = (a - mean) / std
+        return x_train, x_test,a
+    
+def split_data(df,label):
+    x_train,x_test,y_train,y_test = train_test_split(df,label,random_state=42,stratify=label,test_size=0.25)
+    return x_train,x_test,y_train,y_test
+
+def normalize_new(new,mean,std):
+    new = (new - mean) / std
+    return new
 
 class fit():
     def __init__(self,x_train,y_train,epoch,alpha):
@@ -36,28 +50,25 @@ class fit():
         #print(f"final loss: {l}")
         return w,b
     
-    def predict(self,test_input,w,b):
-        z = (test_input @ self.w)+b
+    def predict(self,test_input):
+        z = (test_input @ self.w)+self.b
         K = 1/(1+np.exp(-z))
         y_pred = (K>=0.5).astype(int)
         return y_pred
 
 
-def regression(x_train,x_test,y_train,y_test):
+def regression(name,df,label,new= None):
     epoch = 200
-    alpha = 0.15
-
-    x_train, x_test, mean, std = normalize(x_train, x_test)
-
-    x_train = x_train.values
-    x_test  = x_test.values
-    y_train = y_train.values
-    y_test  = y_test.values
-
-    model = fit(x_train, y_train, epoch, alpha)
-
-    y_pred = model.predict(x_test,model.w,model.b)
-
+    alpha = 0.5
+    new = new.reshape(1,-1)
+    x_train,x_test,y_train,y_test = split_data(df,label)
+    x_train, x_test, new = normalize(x_train, x_test,new)
+    name = fit(x_train, y_train, epoch, alpha)
+    y_pred = name.predict(x_test)
     acc = np.mean(y_pred == y_test) * 100
-    print(f"Accuracy: {acc:.2f}%")
-    print(f"mean: {mean},std: {std}",sep= "\n")
+
+    if(new.all() == None):
+        return acc
+    else:
+        prediction = name.predict(new.reshape(1,-1))
+        return prediction , acc
