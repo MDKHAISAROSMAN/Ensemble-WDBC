@@ -20,42 +20,52 @@ def euclidian_distance(a,b):
     return np.sqrt(np.sum((b-a)**2))
 
 class KNN:
-    def __init__(self,k):
-        self.k  = k
+    def __init__(self, k):
+        self.k = k
     
-    def train(self,x,y):
+    def train(self, x, y):
         self.x_train = x
-        self.y_train = y
-
-    def predict(self,new_input):
-        prediction = [self.predict_class(new_point) for new_point in new_input]
-        return prediction
+        self.y_train = y.flatten()
     
-    def predict_class(self,new_point):
-        distances = [euclidian_distance(point,new_point) for point in self.x_train]
-        k_nearest_index = np.argsort(distances)[:self.k]
-        k_nearest_label = [self.y_train[i] for i in k_nearest_index]
-        most_common = Counter(k_nearest_label).most_common(1)[0][0]
-        return int(most_common)
+    def predict(self, new_input):
+        return np.array([self.predict_class(p)[0] for p in new_input])
+    
+    def predict_proba(self, new_input):
+        return np.vstack([self.predict_class(p)[1] for p in new_input])
+    
+    def predict_class(self, new_point):
+        distances = [euclidian_distance(point, new_point) for point in self.x_train]
+        k_idx = np.argsort(distances)[:self.k]
+        labels = [int(self.y_train[i]) for i in k_idx]
+        count = Counter(labels)
+        total = len(labels)
+        p0 = count.get(0, 0) / total
+        p1 = count.get(1, 0) / total
+        prob = np.array([p0, p1])   # (2,)
+        pred = count.most_common(1)[0][0]
+        return int(pred), prob
 
-def K_NN(name,path,test= None):
-    df,label = load_data(path)
-    x_train,x_test,y_train,y_test = split_data(df,label)
-    x_train = x_train.values
-    x_test = x_test.values
+def K_NN(name, path, test=None):
+    df, label = load_data(path)
+    x_train, x_test, y_train, y_test = split_data(df, label)
+
+    x_train = x_train.values.astype(float)
+    x_test = x_test.values.astype(float)
     y_train = y_train.values
-    y_test = y_test.values
+    y_test = y_test.values.flatten()
+
     name = KNN(7)
-    x_test=x_test.astype(float)
-    x_train = x_train
-    name.train(x_train,y_train)
+    name.train(x_train, y_train)
+
     predictions = name.predict(x_test)
     accuracy = np.mean(predictions == y_test) * 100
-    if test.all() == None:
-        return 0,accuracy
+
+    if test is None:
+        return accuracy
     else:
         test = np.array(test, dtype=float).reshape(1, -1)
-        y = name.predict(test)
-        return y[0],accuracy
 
-
+        prob = name.predict_proba(test)
+        pred = np.argmax(prob, axis=1)
+        print(f"K-NN accuracy: {accuracy}")
+        return prob, pred, accuracy
