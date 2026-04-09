@@ -41,7 +41,7 @@ class KNN:
         total = len(labels)
         p0 = count.get(0, 0) / total
         p1 = count.get(1, 0) / total
-        prob = np.array([p0, p1])   # (2,)
+        prob = np.array([p0, p1])
         pred = count.most_common(1)[0][0]
         return int(pred), prob
 

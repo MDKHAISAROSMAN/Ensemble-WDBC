@@ -43,8 +43,8 @@ class LogisticRegression:
 
     def predict_proba(self, x):
         z = np.clip(x @ self.w + self.b, -500, 500)
-        p1 = 1 / (1 + np.exp(-z))           # shape (n, 1)
-        return np.hstack((1 - p1, p1))       # shape (n, 2)
+        p1 = 1 / (1 + np.exp(-z))           
+        return np.hstack((1 - p1, p1))       
 
     def predict(self, x):
         return (self.predict_proba(x)[:, 1] >= 0.5).astype(int)
@@ -65,7 +65,7 @@ def regression(path, new=None):
     if new is None:
         return acc
 
-    proba      = model.predict_proba(new_norm)   # shape (1, 2)
+    proba      = model.predict_proba(new_norm) 
     p0         = round(float(proba[0, 0]), 4)
     p1         = round(float(proba[0, 1]), 4)
     prediction = int(proba[0, 1] >= 0.5)
